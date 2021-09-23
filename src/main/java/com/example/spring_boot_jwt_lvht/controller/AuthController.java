@@ -1,8 +1,11 @@
 package com.example.spring_boot_jwt_lvht.controller;
 
 import com.example.spring_boot_jwt_lvht.authen.UserPrincipal;
+import com.example.spring_boot_jwt_lvht.entity.Token;
+import com.example.spring_boot_jwt_lvht.service.TokenService;
 import com.example.spring_boot_jwt_lvht.service.UserService;
 import com.example.spring_boot_jwt_lvht.entity.User;
+import com.example.spring_boot_jwt_lvht.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +18,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private TokenService tokenService;
 
     @PostMapping("/register")
     public User register(@RequestBody User user){
@@ -33,6 +42,14 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Account or password is not valid!");
         }
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body("Login Success!!!");
+
+        Token token = new Token();
+        token.setToken(jwtUtil.generateToken(userPrincipal));
+
+        token.setTokenExpDate(jwtUtil.generateExpirationDate());
+        token.setCreatedBy(userPrincipal.getUserId());
+        tokenService.createToken(token);
+
+        return ResponseEntity.ok(token.getToken());
     }
 }
